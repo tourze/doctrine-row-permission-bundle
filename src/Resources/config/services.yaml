@@ -1,0 +1,17 @@
+services:
+  # default configuration for services in *this* file
+  _defaults:
+    autowire: true      # Automatically injects dependencies in your services.
+    autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+  # 主要服务
+  Tourze\DoctrineRowPermissionBundle\Interface\RowPermissionInterface:
+    alias: Tourze\DoctrineRowPermissionBundle\Service\SecurityService
+  
+  # 存储库服务  
+  Tourze\DoctrineRowPermissionBundle\Repository\:
+    resource: '../../Repository/'
+  
+  # 服务类  
+  Tourze\DoctrineRowPermissionBundle\Service\:
+    resource: '../../Service/'
