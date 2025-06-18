@@ -13,24 +13,12 @@ use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
-use Tourze\EasyAdmin\Attribute\Action\Creatable;
-use Tourze\EasyAdmin\Attribute\Action\Deletable;
-use Tourze\EasyAdmin\Attribute\Action\Editable;
-use Tourze\EasyAdmin\Attribute\Column\BoolColumn;
-use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
-use Tourze\EasyAdmin\Attribute\Field\FormField;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
 
 /**
  * 这个希望做的是对RBAC体系进行权限控制上的补充，做到行级数据的控制。
  * 行级别的数据权限模型（Row-Level Security，RLS）：该模型通过在数据表中添加行级别的权限控制规则，来限制用户对数据的访问。例如，可以为每个用户或角色分配一个过滤器，该过滤器只允许其访问表中特定的行。
  * 参考 https://github.com/symfony/acl-bundle/blob/main/src/Resources/doc/index.rst 使用mask来做权限控制
  */
-#[AsPermission(title: '用户行级数据权限')]
-#[Creatable]
-#[Editable]
-#[Deletable]
 #[ORM\Entity(repositoryClass: UserRowPermissionRepository::class)]
 #[ORM\Table(name: 'ims_entity_permission', options: ['comment' => '用户行级数据权限'])]
 #[ORM\UniqueConstraint(name: 'ims_entity_permission_idx_uniq', columns: ['entity_class', 'entity_id', 'user_id'])]
@@ -46,36 +34,26 @@ class UserRowPermission implements PermissionConstantInterface
 
     public const UNLINK = 'unlink';
 
-    #[ExportColumn]
-    #[ListColumn(order: -1, sorter: true)]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
     #[ORM\Column(type: Types::BIGINT, nullable: false, options: ['comment' => 'ID'])]
     private ?string $id = null;
 
-    #[ListColumn]
-    #[FormField]
     #[IndexColumn]
     #[TrackColumn]
     #[ORM\Column(length: 255, options: ['comment' => '实体类名'])]
     private string $entityClass;
 
-    #[ListColumn]
-    #[FormField]
     #[IndexColumn]
     #[TrackColumn]
     #[ORM\Column(length: 64, options: ['comment' => '实体ID'])]
     private string $entityId;
 
-    #[ListColumn]
-    #[FormField]
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?UserInterface $user = null;
 
-    #[FormField]
-    #[ListColumn]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '备注'])]
     private ?string $remark = null;
 
@@ -91,12 +69,9 @@ class UserRowPermission implements PermissionConstantInterface
     #[ORM\Column(type: Types::BOOLEAN, options: ['comment' => '允许解除关联', 'default' => false])]
     private bool $unlink = false;
 
-    #[BoolColumn]
     #[IndexColumn]
     #[TrackColumn]
     #[ORM\Column(type: Types::BOOLEAN, nullable: false, options: ['comment' => '有效', 'default' => false])]
-    #[ListColumn(order: 97)]
-    #[FormField(order: 97)]
     private bool $valid = false;
 
     #[CreatedByColumn]
