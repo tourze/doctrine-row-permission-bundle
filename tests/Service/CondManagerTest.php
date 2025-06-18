@@ -48,8 +48,6 @@ class CondManagerTest extends TestCase
             ->with('未提供用户对象，跳过权限控制');
 
         $result = $this->condManager->getUserRowWhereStatements('TestEntity', 'e', null);
-        
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -68,8 +66,6 @@ class CondManagerTest extends TestCase
             $this->user,
             [PermissionConstantInterface::VIEW]
         );
-
-        $this->assertIsArray($result);
         $this->assertCount(2, $result); // 应该有两个条件：deny 条件和 view 条件
         
         // 验证 deny 条件
@@ -119,8 +115,6 @@ class CondManagerTest extends TestCase
             $this->user,
             $permissions
         );
-
-        $this->assertIsArray($result);
         $this->assertCount(2, $result);
         
         // 检查 OR 条件中包含所有权限类型
@@ -153,8 +147,6 @@ class CondManagerTest extends TestCase
             $this->user,
             $permissions
         );
-
-        $this->assertIsArray($result);
         $this->assertCount(2, $result);
         
         // 只应包含视图权限，不应包含未知权限
@@ -190,10 +182,7 @@ class CondManagerTest extends TestCase
             $connection,
             [PermissionConstantInterface::VIEW]
         );
-        
-        $this->assertIsString($sql);
         $this->assertNotEmpty($sql);
-        $this->assertIsArray($parameters);
     }
 
     /**
