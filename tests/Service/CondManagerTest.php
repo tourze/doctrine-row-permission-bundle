@@ -8,7 +8,6 @@ use Doctrine\ORM\QueryBuilder;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Tourze\DoctrineRowPermissionBundle\Entity\UserRowPermission;
 use Tourze\DoctrineRowPermissionBundle\Interface\PermissionConstantInterface;
 use Tourze\DoctrineRowPermissionBundle\Service\CondManager;
 
@@ -185,21 +184,4 @@ class CondManagerTest extends TestCase
         $this->assertNotEmpty($sql);
     }
 
-    /**
-     * 辅助方法：创建一个用于测试的权限对象
-     */
-    private function createPermission(string $entityClass, string $entityId): UserRowPermission
-    {
-        $permission = new UserRowPermission();
-        $permission->setEntityClass($entityClass);
-        $permission->setEntityId($entityId);
-        $permission->setUser($this->user);
-        $permission->setView(true);
-        $permission->setEdit(false);
-        $permission->setUnlink(false);
-        $permission->setDeny(false);
-        $permission->setValid(true);
-        
-        return $permission;
-    }
 } 

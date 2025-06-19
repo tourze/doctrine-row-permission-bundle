@@ -38,7 +38,7 @@ class CondManager
     ): array {
         $result = [];
         
-        if (!$user) {
+        if (null === $user) {
             $this->logger->debug('未提供用户对象，跳过权限控制');
             return $result;
         }

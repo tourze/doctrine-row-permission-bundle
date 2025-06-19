@@ -11,8 +11,7 @@ use Tourze\DoctrineRowPermissionBundle\Repository\UserRowPermissionRepository;
 use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
-use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
-use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
+use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 
 /**
  * 这个希望做的是对RBAC体系进行权限控制上的补充，做到行级数据的控制。
@@ -25,9 +24,10 @@ use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 #[ORM\Index(name: 'ims_entity_permission_entity_class_idx', columns: ['entity_class'])]
 #[ORM\Index(name: 'ims_entity_permission_entity_id_idx', columns: ['entity_id'])]
 #[ORM\Index(name: 'ims_entity_permission_user_id_idx', columns: ['user_id'])]
-class UserRowPermission implements PermissionConstantInterface
+class UserRowPermission implements PermissionConstantInterface, \Stringable
 {
     use TimestampableAware;
+    use BlameableAware;
     public const VIEW = 'view';
 
     public const EDIT = 'edit';
@@ -74,42 +74,12 @@ class UserRowPermission implements PermissionConstantInterface
     #[ORM\Column(type: Types::BOOLEAN, nullable: false, options: ['comment' => '有效', 'default' => false])]
     private bool $valid = false;
 
-    #[CreatedByColumn]
-    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
-    private ?string $createdBy = null;
-
-    #[UpdatedByColumn]
-    #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
-    private ?string $updatedBy = null;
 
     public function getId(): ?string
     {
         return $this->id;
     }
 
-    public function setCreatedBy(?string $createdBy): self
-    {
-        $this->createdBy = $createdBy;
-
-        return $this;
-    }
-
-    public function getCreatedBy(): ?string
-    {
-        return $this->createdBy;
-    }
-
-    public function setUpdatedBy(?string $updatedBy): self
-    {
-        $this->updatedBy = $updatedBy;
-
-        return $this;
-    }
-
-    public function getUpdatedBy(): ?string
-    {
-        return $this->updatedBy;
-    }
 
     public function isValid(): bool
     {
@@ -217,7 +187,14 @@ class UserRowPermission implements PermissionConstantInterface
         $this->unlink = $unlink;
 
         return $this;
-    }/**
+    }
+
+    public function __toString(): string
+    {
+        return sprintf('UserRowPermission[%s:%s:%s]', $this->entityClass, $this->entityId, $this->user?->getUserIdentifier() ?? 'anonymous');
+    }
+
+    /**
      * 检查当前权限记录是否允许特定操作
      */
     public function hasPermission(string $permissionType): bool

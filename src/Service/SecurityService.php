@@ -44,7 +44,7 @@ class SecurityService implements RowPermissionInterface
      */
     public function hasPermission(?UserInterface $user, object $entity, string $permission): bool
     {
-        if (!$user) {
+        if (null === $user) {
             return false;
         }
         
@@ -65,7 +65,7 @@ class SecurityService implements RowPermissionInterface
                 $permission
             );
             
-            if ($this->cache) {
+            if (null !== $this->cache) {
                 $cacheItem = $this->cache->getItem($cacheKey);
                 if ($cacheItem->isHit()) {
                     return $cacheItem->get();
@@ -81,7 +81,7 @@ class SecurityService implements RowPermissionInterface
                 'valid' => true,
             ]);
             
-            if ($denyRecord) {
+            if (null !== $denyRecord) {
                 $this->cacheResult($cacheKey, false);
                 return false;
             }
@@ -116,7 +116,7 @@ class SecurityService implements RowPermissionInterface
      */
     private function cacheResult(string $key, bool $result): void
     {
-        if (!$this->cache) {
+        if (null === $this->cache) {
             return;
         }
         
@@ -218,7 +218,7 @@ class SecurityService implements RowPermissionInterface
             'entityId' => $object->getId(),
         ]);
         
-        if (!$def) {
+        if (null === $def) {
             $def = new UserRowPermission();
             $def->setUser($user);
             $def->setEntityClass($className);
@@ -270,7 +270,7 @@ class SecurityService implements RowPermissionInterface
      */
     private function clearPermissionCache(UserInterface $user, object $entity): void
     {
-        if (!$this->cache) {
+        if (null === $this->cache) {
             return;
         }
         

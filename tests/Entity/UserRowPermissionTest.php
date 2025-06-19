@@ -201,7 +201,7 @@ class UserRowPermissionTest extends TestCase
      */
     public function testCreateTimeGetterSetter(): void
     {
-        $now = new \DateTime();
+        $now = new \DateTimeImmutable();
         
         $this->userRowPermission->setCreateTime($now);
         $this->assertEquals($now, $this->userRowPermission->getCreateTime());
@@ -216,7 +216,7 @@ class UserRowPermissionTest extends TestCase
      */
     public function testUpdateTimeGetterSetter(): void
     {
-        $now = new \DateTime();
+        $now = new \DateTimeImmutable();
         
         $this->userRowPermission->setUpdateTime($now);
         $this->assertEquals($now, $this->userRowPermission->getUpdateTime());

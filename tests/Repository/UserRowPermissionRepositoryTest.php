@@ -14,7 +14,6 @@ use Tourze\DoctrineRowPermissionBundle\Repository\UserRowPermissionRepository;
 
 class UserRowPermissionRepositoryTest extends TestCase
 {
-    private UserRowPermissionRepository $repository;
     private ManagerRegistry $registry;
     private EntityManagerInterface $entityManager;
     private UserInterface $user;
