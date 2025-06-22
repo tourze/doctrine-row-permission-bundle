@@ -25,7 +25,7 @@ class UserRowPermissionRepository extends ServiceEntityRepository
     
     /**
      * 查找用户对特定实体的权限记录
-     * 
+     *
      * @param UserInterface $user 用户
      * @param string $entityClass 实体类名
      * @param string $entityId 实体ID
@@ -43,7 +43,7 @@ class UserRowPermissionRepository extends ServiceEntityRepository
     
     /**
      * 查找具有特定权限的记录
-     * 
+     *
      * @param UserInterface $user 用户
      * @param string $entityClass 实体类名
      * @param string $entityId 实体ID
@@ -76,7 +76,7 @@ class UserRowPermissionRepository extends ServiceEntityRepository
     
     /**
      * 批量查找指定用户对多个实体的权限
-     * 
+     *
      * @param UserInterface $user 用户
      * @param string $entityClass 实体类名
      * @param array $entityIds 实体ID数组
