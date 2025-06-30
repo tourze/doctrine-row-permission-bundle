@@ -232,34 +232,39 @@ class SecurityServiceTest extends TestCase
             PermissionConstantInterface::EDIT => false
         ];
         
-        // 模拟 request 转换过程
-        $mockPermission = $this->createMock(UserRowPermission::class);
+        // 模拟已存在的权限记录
+        $existingPermission = $this->createMock(UserRowPermission::class);
         
-        // 使用 PHPUnit 的 callback 函数来验证传递给 grantRowPermission 的参数
-        $this->service = $this->getMockBuilder(SecurityService::class)
-            ->setConstructorArgs([
-                $this->repository,
-                $this->entityManager,
-                $this->logger,
-                $this->condManager,
-                $this->cache
+        // 模拟 repository 的 findOneBy 方法返回已存在的权限记录
+        $this->repository->expects($this->once())
+            ->method('findOneBy')
+            ->with([
+                'user' => $this->user,
+                'entityClass' => get_class($entity),
+                'entityId' => '123',
             ])
-            ->onlyMethods(['grantRowPermission'])
-            ->getMock();
+            ->willReturn($existingPermission);
         
-        $this->service->expects($this->once())
-            ->method('grantRowPermission')
-            ->with($this->callback(function (GrantRowPermissionRequest $request) use ($entity, $permissions) {
-                return $request->getUser() === $this->user
-                    && $request->getObject() === $entity
-                    && $request->getView() === $permissions[PermissionConstantInterface::VIEW]
-                    && $request->getEdit() === $permissions[PermissionConstantInterface::EDIT];
-            }))
-            ->willReturn($mockPermission);
+        // 期望调用 setter 方法来更新权限
+        $existingPermission->expects($this->once())
+            ->method('setView')
+            ->with(true);
+        $existingPermission->expects($this->once())
+            ->method('setEdit')
+            ->with(false);
+        $existingPermission->expects($this->once())
+            ->method('setValid')
+            ->with(true);
+        
+        // 即使是更新现有记录，代码也会调用 persist
+        $this->entityManager->expects($this->once())
+            ->method('persist')
+            ->with($existingPermission);
+        $this->entityManager->expects($this->once())->method('flush');
         
         $result = $this->service->grantPermission($this->user, $entity, $permissions);
         
-        $this->assertSame($mockPermission, $result);
+        $this->assertSame($existingPermission, $result);
     }
 
     /**
@@ -302,26 +307,22 @@ class SecurityServiceTest extends TestCase
         $permission2->setEdit(false);
         $permission2->setValid(true);
         
-        // 模拟 service->grantPermission 返回值
-        $servicePartialMock = $this->getMockBuilder(SecurityService::class)
-            ->setConstructorArgs([
-                $this->repository,
-                $this->entityManager,
-                $this->logger,
-                $this->condManager,
-                $this->cache
-            ])
-            ->onlyMethods(['grantPermission'])
-            ->getMock();
+        // 模拟 repository 的 findOneBy 方法
+        $this->repository->expects($this->exactly(2))
+            ->method('findOneBy')
+            ->willReturnOnConsecutiveCalls(null, null);
         
-        $servicePartialMock->expects($this->exactly(2))
-            ->method('grantPermission')
-            ->willReturnMap([
-                [$this->user, $entity1, $permissions, $permission1],
-                [$this->user, $entity2, $permissions, $permission2]
-            ]);
+        // 模拟 EntityManager 的 persist 和 flush
+        $persistedObjects = [];
+        $this->entityManager->expects($this->exactly(2))
+            ->method('persist')
+            ->with($this->isInstanceOf(UserRowPermission::class))
+            ->willReturnCallback(function($permission) use (&$persistedObjects) {
+                $persistedObjects[] = $permission;
+            });
+        $this->entityManager->expects($this->exactly(2))->method('flush');
         
-        $result = $servicePartialMock->grantBatchPermissions(
+        $result = $this->service->grantBatchPermissions(
             $this->user,
             [$entity1, $entity2],
             $permissions

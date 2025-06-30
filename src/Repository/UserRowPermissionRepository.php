@@ -10,7 +10,7 @@ use Tourze\DoctrineRowPermissionBundle\Interface\PermissionConstantInterface;
 
 /**
  * 用户行级权限仓库
- * 
+ *
  * @method UserRowPermission|null find($id, $lockMode = null, $lockVersion = null)
  * @method UserRowPermission|null findOneBy(array $criteria, array $orderBy = null)
  * @method UserRowPermission[] findAll()

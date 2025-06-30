@@ -8,7 +8,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineRowPermissionBundle\Interface\PermissionConstantInterface;
 use Tourze\DoctrineRowPermissionBundle\Repository\UserRowPermissionRepository;
-use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
+use Tourze\DoctrineSnowflakeBundle\Traits\SnowflakeKeyAware;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
@@ -26,6 +26,7 @@ use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 #[ORM\Index(name: 'ims_entity_permission_user_id_idx', columns: ['user_id'])]
 class UserRowPermission implements PermissionConstantInterface, \Stringable
 {
+    use SnowflakeKeyAware;
     use TimestampableAware;
     use BlameableAware;
     public const VIEW = 'view';
@@ -33,12 +34,6 @@ class UserRowPermission implements PermissionConstantInterface, \Stringable
     public const EDIT = 'edit';
 
     public const UNLINK = 'unlink';
-
-    #[ORM\Id]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
-    #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
-    #[ORM\Column(type: Types::BIGINT, nullable: false, options: ['comment' => 'ID'])]
-    private ?string $id = null;
 
     #[IndexColumn]
     #[TrackColumn]
@@ -73,13 +68,6 @@ class UserRowPermission implements PermissionConstantInterface, \Stringable
     #[TrackColumn]
     #[ORM\Column(type: Types::BOOLEAN, nullable: false, options: ['comment' => '有效', 'default' => false])]
     private bool $valid = false;
-
-
-    public function getId(): ?string
-    {
-        return $this->id;
-    }
-
 
     public function isValid(): bool
     {
