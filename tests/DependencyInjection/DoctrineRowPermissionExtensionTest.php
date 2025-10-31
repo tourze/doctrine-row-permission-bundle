@@ -2,21 +2,29 @@
 
 namespace Tourze\DoctrineRowPermissionBundle\Tests\DependencyInjection;
 
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Tourze\DoctrineRowPermissionBundle\DependencyInjection\DoctrineRowPermissionExtension;
 use Tourze\DoctrineRowPermissionBundle\Service\CondManager;
 use Tourze\DoctrineRowPermissionBundle\Service\SecurityService;
+use Tourze\PHPUnitSymfonyUnitTest\AbstractDependencyInjectionExtensionTestCase;
 
-class DoctrineRowPermissionExtensionTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(DoctrineRowPermissionExtension::class)]
+final class DoctrineRowPermissionExtensionTest extends AbstractDependencyInjectionExtensionTestCase
 {
     private DoctrineRowPermissionExtension $extension;
+
     private ContainerBuilder $container;
 
     protected function setUp(): void
     {
+        parent::setUp();
         $this->extension = new DoctrineRowPermissionExtension();
         $this->container = new ContainerBuilder();
+        $this->container->setParameter('kernel.environment', 'test');
     }
 
     /**

@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\DoctrineRowPermissionBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineRowPermissionBundle\Interface\PermissionConstantInterface;
 use Tourze\DoctrineRowPermissionBundle\Repository\UserRowPermissionRepository;
@@ -21,14 +24,12 @@ use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 #[ORM\Entity(repositoryClass: UserRowPermissionRepository::class)]
 #[ORM\Table(name: 'ims_entity_permission', options: ['comment' => '用户行级数据权限'])]
 #[ORM\UniqueConstraint(name: 'ims_entity_permission_idx_uniq', columns: ['entity_class', 'entity_id', 'user_id'])]
-#[ORM\Index(name: 'ims_entity_permission_entity_class_idx', columns: ['entity_class'])]
-#[ORM\Index(name: 'ims_entity_permission_entity_id_idx', columns: ['entity_id'])]
-#[ORM\Index(name: 'ims_entity_permission_user_id_idx', columns: ['user_id'])]
 class UserRowPermission implements PermissionConstantInterface, \Stringable
 {
     use SnowflakeKeyAware;
     use TimestampableAware;
     use BlameableAware;
+
     public const VIEW = 'view';
 
     public const EDIT = 'edit';
@@ -38,11 +39,15 @@ class UserRowPermission implements PermissionConstantInterface, \Stringable
     #[IndexColumn]
     #[TrackColumn]
     #[ORM\Column(length: 255, options: ['comment' => '实体类名'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 255)]
     private string $entityClass;
 
     #[IndexColumn]
     #[TrackColumn]
     #[ORM\Column(length: 64, options: ['comment' => '实体ID'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 64)]
     private string $entityId;
 
     #[ORM\ManyToOne]
@@ -50,23 +55,29 @@ class UserRowPermission implements PermissionConstantInterface, \Stringable
     private ?UserInterface $user = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '备注'])]
+    #[Assert\Length(max: 65535)]
     private ?string $remark = null;
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['comment' => '禁止访问', 'default' => false])]
+    #[Assert\Type(type: 'bool')]
     private bool $deny = false;
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['comment' => '允许查看', 'default' => false])]
+    #[Assert\Type(type: 'bool')]
     private bool $view = false;
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['comment' => '允许编辑', 'default' => false])]
+    #[Assert\Type(type: 'bool')]
     private bool $edit = false;
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['comment' => '允许解除关联', 'default' => false])]
+    #[Assert\Type(type: 'bool')]
     private bool $unlink = false;
 
     #[IndexColumn]
     #[TrackColumn]
     #[ORM\Column(type: Types::BOOLEAN, nullable: false, options: ['comment' => '有效', 'default' => false])]
+    #[Assert\Type(type: 'bool')]
     private bool $valid = false;
 
     public function isValid(): bool
@@ -74,11 +85,9 @@ class UserRowPermission implements PermissionConstantInterface, \Stringable
         return $this->valid;
     }
 
-    public function setValid(bool $valid): self
+    public function setValid(bool $valid): void
     {
         $this->valid = $valid;
-
-        return $this;
     }
 
     public function getEntityClass(): string
@@ -86,11 +95,9 @@ class UserRowPermission implements PermissionConstantInterface, \Stringable
         return $this->entityClass;
     }
 
-    public function setEntityClass(string $entityClass): self
+    public function setEntityClass(string $entityClass): void
     {
         $this->entityClass = $entityClass;
-
-        return $this;
     }
 
     public function getEntityId(): string
@@ -98,11 +105,9 @@ class UserRowPermission implements PermissionConstantInterface, \Stringable
         return $this->entityId;
     }
 
-    public function setEntityId(string $entityId): self
+    public function setEntityId(string $entityId): void
     {
         $this->entityId = $entityId;
-
-        return $this;
     }
 
     public function getUser(): ?UserInterface
@@ -110,11 +115,9 @@ class UserRowPermission implements PermissionConstantInterface, \Stringable
         return $this->user;
     }
 
-    public function setUser(?UserInterface $user): self
+    public function setUser(?UserInterface $user): void
     {
         $this->user = $user;
-
-        return $this;
     }
 
     public function getRemark(): ?string
@@ -122,11 +125,9 @@ class UserRowPermission implements PermissionConstantInterface, \Stringable
         return $this->remark;
     }
 
-    public function setRemark(?string $remark): self
+    public function setRemark(?string $remark): void
     {
         $this->remark = $remark;
-
-        return $this;
     }
 
     public function isDeny(): bool
@@ -134,11 +135,9 @@ class UserRowPermission implements PermissionConstantInterface, \Stringable
         return $this->deny;
     }
 
-    public function setDeny(bool $deny): self
+    public function setDeny(bool $deny): void
     {
         $this->deny = $deny;
-
-        return $this;
     }
 
     public function isView(): bool
@@ -146,11 +145,9 @@ class UserRowPermission implements PermissionConstantInterface, \Stringable
         return $this->view;
     }
 
-    public function setView(bool $view): self
+    public function setView(bool $view): void
     {
         $this->view = $view;
-
-        return $this;
     }
 
     public function isEdit(): bool
@@ -158,11 +155,9 @@ class UserRowPermission implements PermissionConstantInterface, \Stringable
         return $this->edit;
     }
 
-    public function setEdit(bool $edit): self
+    public function setEdit(bool $edit): void
     {
         $this->edit = $edit;
-
-        return $this;
     }
 
     public function isUnlink(): bool
@@ -170,11 +165,9 @@ class UserRowPermission implements PermissionConstantInterface, \Stringable
         return $this->unlink;
     }
 
-    public function setUnlink(bool $unlink): self
+    public function setUnlink(bool $unlink): void
     {
         $this->unlink = $unlink;
-
-        return $this;
     }
 
     public function __toString(): string

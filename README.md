@@ -1,26 +1,61 @@
 # Doctrine Row Permission Bundle
 
-这个 Symfony bundle 用于提供行级别的数据权限控制，作为 RBAC 权限体系的补充，实现对数据的精确控制。
+[English](README.md) | [中文](README.zh-CN.md)
 
-## 安装
+[![Latest Version](https://img.shields.io/packagist/v/tourze/doctrine-row-permission-bundle.svg?style=flat-square)](https://packagist.org/packages/tourze/doctrine-row-permission-bundle)
+[![PHP Version](https://img.shields.io/packagist/php-v/tourze/doctrine-row-permission-bundle.svg?style=flat-square)](https://packagist.org/packages/tourze/doctrine-row-permission-bundle)
+[![License](https://img.shields.io/packagist/l/tourze/doctrine-row-permission-bundle.svg?style=flat-square)](LICENSE)
+[![Total Downloads](https://img.shields.io/packagist/dt/tourze/doctrine-row-permission-bundle.svg?style=flat-square)](https://packagist.org/packages/tourze/doctrine-row-permission-bundle)
 
-通过 Composer 安装:
+A Symfony Bundle that provides row-level permission control system based on Doctrine ORM, 
+serving as a complement to RBAC permission systems for precise data access control at entity level.
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+  - [Requirements](#requirements)
+  - [Install via Composer](#install-via-composer)
+  - [Register Bundle](#register-bundle)
+- [Quick Start](#quick-start)
+  - [Basic Permission Management](#basic-permission-management)
+  - [Query Integration](#query-integration)
+  - [Batch Operations](#batch-operations)
+- [Configuration](#configuration)
+  - [Cache Setup](#cache-setup)
+  - [Custom Permission Logic](#custom-permission-logic)
+- [Permission Types](#permission-types)
+- [Security](#security)
+- [Contributing](#contributing)
+  - [Development](#development)
+- [License](#license)
+
+## Features
+
+- 🔒 **Row-Level Security** - Control access to specific entity instances
+- 🎯 **Multiple Permission Types** - Support view, edit, delete operations  
+- 🚫 **Explicit Deny** - Support for explicit access denial with highest priority
+- 🔍 **Query Integration** - Doctrine QueryBuilder integration for filtered queries
+- ⚡ **Performance Cache** - Built-in caching for improved permission checking
+- 📦 **Batch Operations** - Efficient batch permission management
+
+## Installation
+
+### Requirements
+
+- PHP 8.1+
+- Symfony 7.3+  
+- Doctrine ORM 3.0+
+
+### Install via Composer
 
 ```bash
 composer require tourze/doctrine-row-permission-bundle
 ```
 
-## 功能特点
+### Register Bundle
 
-- 为特定用户授予对特定实体行的访问权限
-- 支持多种权限类型：查看、编辑、解除关联
-- 支持同时禁止访问特定实体
-- 提供查询构建器条件，轻松应用于 Doctrine 查询
-- 支持缓存机制，提高性能
-
-## 配置
-
-在 `config/bundles.php` 中注册 bundle:
+Add to `config/bundles.php`:
 
 ```php
 return [
@@ -29,85 +64,62 @@ return [
 ];
 ```
 
-## 使用方法
+## Quick Start
 
-### 授予权限
+### Basic Permission Management
 
 ```php
-// 通过依赖注入获取服务
+<?php
+
 use Tourze\DoctrineRowPermissionBundle\Interface\RowPermissionInterface;
 use Tourze\DoctrineRowPermissionBundle\Interface\PermissionConstantInterface;
 
-class YourService 
+class ProductService
 {
-    public function grantPermission(
-        RowPermissionInterface $permissionService,
-        User $user,
-        Product $product
-    ): void {
-        // 授予单个实体的权限
-        $permissionService->grantPermission($user, $product, [
+    public function __construct(
+        private RowPermissionInterface $permissionService
+    ) {}
+
+    // Grant single entity permission
+    public function grantUserAccess(User $user, Product $product): void
+    {
+        $this->permissionService->grantPermission($user, $product, [
             PermissionConstantInterface::VIEW => true,
             PermissionConstantInterface::EDIT => false,
-            PermissionConstantInterface::UNLINK => false,
         ]);
-        
-        // 或批量授予权限
-        $products = $productRepository->findAll();
-        $permissionService->grantBatchPermissions($user, $products, [
-            PermissionConstantInterface::VIEW => true,
-        ]);
+    }
+
+    // Check permission
+    public function canUserViewProduct(User $user, Product $product): bool
+    {
+        return $this->permissionService->hasPermission(
+            $user, 
+            $product, 
+            PermissionConstantInterface::VIEW
+        );
     }
 }
 ```
 
-### 检查权限
+### Query Integration
 
 ```php
-// 通过依赖注入获取服务
+<?php
+
+use Doctrine\ORM\EntityRepository;
 use Tourze\DoctrineRowPermissionBundle\Interface\RowPermissionInterface;
-use Tourze\DoctrineRowPermissionBundle\Interface\PermissionConstantInterface;
 
-class YourService 
+class ProductRepository extends EntityRepository
 {
-    public function checkAccess(
-        RowPermissionInterface $permissionService,
-        User $user,
-        Product $product
-    ): bool {
-        // 检查用户是否有查看权限
-        if ($permissionService->hasPermission($user, $product, PermissionConstantInterface::VIEW)) {
-            return true;
-        }
-        
-        return false;
-    }
-}
-```
-
-### 在查询中使用权限过滤
-
-```php
-use Tourze\DoctrineRowPermissionBundle\Interface\RowPermissionInterface;
-use Tourze\DoctrineRowPermissionBundle\Interface\PermissionConstantInterface;
-
-class ProductRepository extends ServiceEntityRepository
-{
-    private RowPermissionInterface $permissionService;
-    
     public function __construct(
-        ManagerRegistry $registry,
-        RowPermissionInterface $permissionService
-    ) {
-        parent::__construct($registry, Product::class);
-        $this->permissionService = $permissionService;
-    }
-    
-    public function findAllWithPermission(User $user): array
+        private RowPermissionInterface $permissionService
+    ) {}
+
+    public function findUserAccessibleProducts(User $user): array
     {
         $qb = $this->createQueryBuilder('p');
         
-        // 获取权限条件
+        // Apply permission filters
         $conditions = $this->permissionService->getQueryConditions(
             Product::class,
             'p',
@@ -115,7 +127,6 @@ class ProductRepository extends ServiceEntityRepository
             [PermissionConstantInterface::VIEW]
         );
         
-        // 应用条件到查询构建器
         foreach ($conditions as [$operator, $condition, $parameters]) {
             $qb->andWhere($condition);
             foreach ($parameters as $name => $value) {
@@ -128,6 +139,95 @@ class ProductRepository extends ServiceEntityRepository
 }
 ```
 
-## 许可证
+### Batch Operations
 
-MIT
+```php
+<?php
+
+// Grant permissions to multiple entities at once
+$this->permissionService->grantBatchPermissions($user, $products, [
+    PermissionConstantInterface::VIEW => true,
+]);
+```
+
+## Configuration
+
+### Cache Setup
+
+Configure cache for better performance:
+
+```yaml
+# config/services.yaml
+services:
+    Tourze\DoctrineRowPermissionBundle\Service\SecurityService:
+        arguments:
+            $cache: '@cache.app'
+```
+
+### Custom Permission Logic
+
+Implement custom permission logic:
+
+```php
+<?php
+
+use Tourze\DoctrineRowPermissionBundle\Interface\RowPermissionInterface;
+
+class CustomPermissionService implements RowPermissionInterface
+{
+    public function hasPermission(?UserInterface $user, object $entity, string $permission): bool
+    {
+        // Custom logic here
+    }
+    
+    // Implement other interface methods...
+}
+```
+
+## Permission Types
+
+Available permission constants:
+
+- `PermissionConstantInterface::VIEW` - View permission  
+- `PermissionConstantInterface::EDIT` - Edit permission
+- `PermissionConstantInterface::UNLINK` - Delete/unlink permission
+- `PermissionConstantInterface::DENY` - Explicit deny (highest priority)
+
+## Security
+
+This bundle implements row-level security (RLS) patterns. For security considerations:
+
+- Always validate user input before granting permissions
+- Use explicit deny for sensitive operations
+- Cache permission checks appropriately 
+- Regular audit of permission assignments
+
+## Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)  
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development
+
+```bash
+# Install dependencies
+composer install
+
+# Run tests (from monorepo root)
+./vendor/bin/phpunit packages/doctrine-row-permission-bundle/tests
+
+# Run static analysis (from monorepo root)  
+./vendor/bin/phpstan analyse packages/doctrine-row-permission-bundle
+
+# Run package checks (from monorepo root)
+bin/console app:check-packages doctrine-row-permission-bundle
+```
+
+## License
+
+The MIT License (MIT). Please see [License File](LICENSE) for more information.

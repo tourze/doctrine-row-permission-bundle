@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\DoctrineRowPermissionBundle\Request;
 
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -50,10 +52,9 @@ class GrantRowPermissionRequest
         return $this->user;
     }
 
-    public function setUser(UserInterface $user): self
+    public function setUser(UserInterface $user): void
     {
         $this->user = $user;
-        return $this;
     }
 
     public function getObject(): object
@@ -61,10 +62,9 @@ class GrantRowPermissionRequest
         return $this->object;
     }
 
-    public function setObject(object $object): self
+    public function setObject(object $object): void
     {
         $this->object = $object;
-        return $this;
     }
 
     public function getView(): ?bool
@@ -72,10 +72,9 @@ class GrantRowPermissionRequest
         return $this->view;
     }
 
-    public function setView(?bool $view): self
+    public function setView(?bool $view): void
     {
         $this->view = $view;
-        return $this;
     }
 
     public function getEdit(): ?bool
@@ -83,10 +82,9 @@ class GrantRowPermissionRequest
         return $this->edit;
     }
 
-    public function setEdit(?bool $edit): self
+    public function setEdit(?bool $edit): void
     {
         $this->edit = $edit;
-        return $this;
     }
 
     public function getUnlink(): ?bool
@@ -94,10 +92,9 @@ class GrantRowPermissionRequest
         return $this->unlink;
     }
 
-    public function setUnlink(?bool $unlink): self
+    public function setUnlink(?bool $unlink): void
     {
         $this->unlink = $unlink;
-        return $this;
     }
 
     public function getDeny(): ?bool
@@ -105,10 +102,9 @@ class GrantRowPermissionRequest
         return $this->deny;
     }
 
-    public function setDeny(?bool $deny): self
+    public function setDeny(?bool $deny): void
     {
         $this->deny = $deny;
-        return $this;
     }
 
     public function getRemark(): ?string
@@ -116,14 +112,15 @@ class GrantRowPermissionRequest
         return $this->remark;
     }
 
-    public function setRemark(?string $remark): self
+    public function setRemark(?string $remark): void
     {
         $this->remark = $remark;
-        return $this;
     }
 
     /**
      * 从权限数组创建请求
+     *
+     * @param array<string, mixed> $permissions
      */
     public static function fromArray(UserInterface $user, object $entity, array $permissions): self
     {
