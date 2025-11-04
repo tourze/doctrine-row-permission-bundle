@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tourze\DoctrineRowPermissionBundle\Tests\Service;
 
 use Doctrine\DBAL\Connection;
+use Psr\Log\NullLogger;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Tourze\DoctrineRowPermissionBundle\Interface\PermissionConstantInterface;
 use Tourze\DoctrineRowPermissionBundle\Service\CondManager;
+use Tourze\DoctrineRowPermissionBundle\Tests\Service\Support\TestServiceFactory;
 use Tourze\PHPUnitSymfonyKernelTest\AbstractIntegrationTestCase;
 
 /**
@@ -19,16 +21,25 @@ use Tourze\PHPUnitSymfonyKernelTest\AbstractIntegrationTestCase;
 #[RunTestsInSeparateProcesses]
 class CondManagerTest extends AbstractIntegrationTestCase
 {
+    private ?CondManager $condManager = null;
+
     protected function onSetUp(): void
     {
-        // 集成测试需要的设置
+        $this->condManager = TestServiceFactory::createCondManager(new NullLogger());
+    }
+
+    private function condManager(): CondManager
+    {
+        if (null === $this->condManager) {
+            throw new \LogicException('CondManager 未初始化');
+        }
+
+        return $this->condManager;
     }
 
     public function testGetUserRowWhereStatementsWithNullUser(): void
     {
-        $condManager = self::getService(CondManager::class);
-
-        $result = $condManager->getUserRowWhereStatements(
+        $result = $this->condManager()->getUserRowWhereStatements(
             'TestEntity',
             'alias',
             null
@@ -39,11 +50,10 @@ class CondManagerTest extends AbstractIntegrationTestCase
 
     public function testGetUserRowWhereStatementsWithUser(): void
     {
-        $condManager = self::getService(CondManager::class);
         $user = $this->createMock(UserInterface::class);
         $user->method('getUserIdentifier')->willReturn('test_user');
 
-        $result = $condManager->getUserRowWhereStatements(
+        $result = $this->condManager()->getUserRowWhereStatements(
             'TestEntity',
             'alias',
             $user,
@@ -67,11 +77,10 @@ class CondManagerTest extends AbstractIntegrationTestCase
 
     public function testGetUserRowWhereStatementsWithMultiplePermissions(): void
     {
-        $condManager = self::getService(CondManager::class);
         $user = $this->createMock(UserInterface::class);
         $user->method('getUserIdentifier')->willReturn('test_user');
 
-        $result = $condManager->getUserRowWhereStatements(
+        $result = $this->condManager()->getUserRowWhereStatements(
             'TestEntity',
             'alias',
             $user,
@@ -89,11 +98,10 @@ class CondManagerTest extends AbstractIntegrationTestCase
 
     public function testGetUserRowWhereStatementsWithInvalidPermission(): void
     {
-        $condManager = self::getService(CondManager::class);
         $user = $this->createMock(UserInterface::class);
         $user->method('getUserIdentifier')->willReturn('test_user');
 
-        $result = $condManager->getUserRowWhereStatements(
+        $result = $this->condManager()->getUserRowWhereStatements(
             'TestEntity',
             'alias',
             $user,
@@ -106,13 +114,12 @@ class CondManagerTest extends AbstractIntegrationTestCase
 
     public function testGetParameterizedSql(): void
     {
-        $condManager = self::getService(CondManager::class);
         $user = $this->createMock(UserInterface::class);
         $user->method('getUserIdentifier')->willReturn('test_user');
 
         $connection = $this->createMock(Connection::class);
 
-        [$sql, $parameters] = $condManager->getParameterizedSql(
+        [$sql, $parameters] = $this->condManager()->getParameterizedSql(
             'TestEntity',
             'alias',
             $user,
@@ -138,10 +145,9 @@ class CondManagerTest extends AbstractIntegrationTestCase
 
     public function testGetParameterizedSqlWithNullUser(): void
     {
-        $condManager = self::getService(CondManager::class);
         $connection = $this->createMock(Connection::class);
 
-        [$sql, $parameters] = $condManager->getParameterizedSql(
+        [$sql, $parameters] = $this->condManager()->getParameterizedSql(
             'TestEntity',
             'alias',
             null,

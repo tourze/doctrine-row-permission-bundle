@@ -70,20 +70,26 @@ readonly class SecurityService implements RowPermissionInterface
                 return false;
             }
 
+            // 确保 entityId 可以转换为字符串
+            $entityIdString = (string) $entityId;
+
             // 尝试从缓存获取
             $realClass = $this->getRealClassName($entity);
             $cacheKey = sprintf(
                 'row_perm_%s_%s_%s_%s',
                 $user->getUserIdentifier(),
                 $realClass,
-                $entityId,
+                $entityIdString,
                 $permission
             );
 
             if (null !== $this->cache) {
                 $cacheItem = $this->cache->getItem($cacheKey);
                 if ($cacheItem->isHit()) {
-                    return $cacheItem->get();
+                    /** @var bool $cachedValue */
+                    $cachedValue = $cacheItem->get();
+
+                    return $cachedValue;
                 }
             }
 
@@ -91,7 +97,7 @@ readonly class SecurityService implements RowPermissionInterface
             $denyRecord = $this->rowPermissionRepository->findOneBy([
                 'user' => $user,
                 'entityClass' => $realClass,
-                'entityId' => (string) $entityId,
+                'entityId' => $entityIdString,
                 'deny' => true,
                 'valid' => true,
             ]);
@@ -106,7 +112,7 @@ readonly class SecurityService implements RowPermissionInterface
             $permRecord = $this->rowPermissionRepository->findOneBy([
                 'user' => $user,
                 'entityClass' => $realClass,
-                'entityId' => (string) $entityId,
+                'entityId' => $entityIdString,
                 $permission => true,
                 'valid' => true,
             ]);
@@ -240,7 +246,14 @@ readonly class SecurityService implements RowPermissionInterface
     public function grantRowPermission(GrantRowPermissionRequest $request): UserRowPermission
     {
         $user = $request->getUser();
+        if (null === $user) {
+            throw new InvalidEntityException('用户不能为空');
+        }
+
         $object = $request->getObject();
+        if (null === $object) {
+            throw new InvalidEntityException('实体对象不能为空');
+        }
 
         if (!method_exists($object, 'getId')) {
             throw new InvalidEntityException('实体必须有 getId 方法');
@@ -251,18 +264,20 @@ readonly class SecurityService implements RowPermissionInterface
             throw new InvalidEntityException('实体 ID 不能为空');
         }
 
+        $entityIdString = (string) $entityId;
+
         $className = $this->getRealClassName($object);
         $def = $this->rowPermissionRepository->findOneBy([
             'user' => $user,
             'entityClass' => $className,
-            'entityId' => (string) $entityId,
+            'entityId' => $entityIdString,
         ]);
 
         if (null === $def) {
             $def = new UserRowPermission();
             $def->setUser($user);
             $def->setEntityClass($className);
-            $def->setEntityId((string) $entityId);
+            $def->setEntityId($entityIdString);
         }
 
         // 设置权限
@@ -322,12 +337,13 @@ readonly class SecurityService implements RowPermissionInterface
             ] as $permission) {
                 $entityId = method_exists($entity, 'getId') ? $entity->getId() : null;
                 if (null !== $entityId) {
+                    $entityIdString = (string) $entityId;
                     $realEntityClass = $this->getRealClassName($entity);
                     $cacheKeys[] = sprintf(
                         'row_perm_%s_%s_%s_%s',
                         $user->getUserIdentifier(),
                         $realEntityClass,
-                        $entityId,
+                        $entityIdString,
                         $permission
                     );
                 }

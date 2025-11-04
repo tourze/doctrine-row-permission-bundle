@@ -2,7 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Tourze\DoctrineRowPermissionBundle\Tests;
+
+namespace Tourze\DoctrineRowPermissionBundle\Tests {
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
@@ -16,4 +17,11 @@ use Tourze\PHPUnitSymfonyKernelTest\AbstractBundleTestCase;
 #[RunTestsInSeparateProcesses]
 final class DoctrineRowPermissionBundleTest extends AbstractBundleTestCase
 {
+    public function testBundleCanBeInstantiated(): void
+    {
+        $bundle = new DoctrineRowPermissionBundle();
+        $this->assertInstanceOf(DoctrineRowPermissionBundle::class, $bundle);
+    }
+}
+
 }

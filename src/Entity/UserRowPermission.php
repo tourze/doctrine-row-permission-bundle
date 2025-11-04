@@ -30,6 +30,13 @@ class UserRowPermission implements PermissionConstantInterface, \Stringable
     use TimestampableAware;
     use BlameableAware;
 
+    public function __construct()
+    {
+        // 初始化必填属性为空字符串,后续通过 setter 设置实际值
+        $this->entityClass = '';
+        $this->entityId = '';
+    }
+
     public const VIEW = 'view';
 
     public const EDIT = 'edit';
@@ -50,7 +57,7 @@ class UserRowPermission implements PermissionConstantInterface, \Stringable
     #[Assert\Length(max: 64)]
     private string $entityId;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(targetEntity: UserInterface::class)]
     #[ORM\JoinColumn(nullable: false)]
     private ?UserInterface $user = null;
 

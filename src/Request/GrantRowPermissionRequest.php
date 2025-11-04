@@ -15,12 +15,12 @@ class GrantRowPermissionRequest
     /**
      * 用户
      */
-    private UserInterface $user;
+    private ?UserInterface $user = null;
 
     /**
      * 实体对象
      */
-    private object $object;
+    private ?object $object = null;
 
     /**
      * 查看权限
@@ -47,7 +47,7 @@ class GrantRowPermissionRequest
      */
     private ?string $remark = null;
 
-    public function getUser(): UserInterface
+    public function getUser(): ?UserInterface
     {
         return $this->user;
     }
@@ -57,7 +57,7 @@ class GrantRowPermissionRequest
         $this->user = $user;
     }
 
-    public function getObject(): object
+    public function getObject(): ?object
     {
         return $this->object;
     }
@@ -129,23 +129,28 @@ class GrantRowPermissionRequest
         $request->setObject($entity);
 
         if (isset($permissions[PermissionConstantInterface::VIEW])) {
-            $request->setView($permissions[PermissionConstantInterface::VIEW]);
+            $value = $permissions[PermissionConstantInterface::VIEW];
+            $request->setView(is_bool($value) ? $value : null);
         }
 
         if (isset($permissions[PermissionConstantInterface::EDIT])) {
-            $request->setEdit($permissions[PermissionConstantInterface::EDIT]);
+            $value = $permissions[PermissionConstantInterface::EDIT];
+            $request->setEdit(is_bool($value) ? $value : null);
         }
 
         if (isset($permissions[PermissionConstantInterface::UNLINK])) {
-            $request->setUnlink($permissions[PermissionConstantInterface::UNLINK]);
+            $value = $permissions[PermissionConstantInterface::UNLINK];
+            $request->setUnlink(is_bool($value) ? $value : null);
         }
 
         if (isset($permissions[PermissionConstantInterface::DENY])) {
-            $request->setDeny($permissions[PermissionConstantInterface::DENY]);
+            $value = $permissions[PermissionConstantInterface::DENY];
+            $request->setDeny(is_bool($value) ? $value : null);
         }
 
         if (isset($permissions['remark'])) {
-            $request->setRemark($permissions['remark']);
+            $value = $permissions['remark'];
+            $request->setRemark(is_string($value) ? $value : null);
         }
 
         return $request;

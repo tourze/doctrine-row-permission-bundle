@@ -88,7 +88,8 @@ class UserRowPermissionRepository extends ServiceEntityRepository
      */
     public function findBatchPermissions(UserInterface $user, string $entityClass, array $entityIds): array
     {
-        return $this->createQueryBuilder('p')
+        /** @var UserRowPermission[] $result */
+        $result = $this->createQueryBuilder('p')
             ->where('p.user = :user')
             ->andWhere('p.entityClass = :entityClass')
             ->andWhere('p.entityId IN (:entityIds)')
@@ -98,8 +99,9 @@ class UserRowPermissionRepository extends ServiceEntityRepository
             ->setParameter('entityIds', $entityIds)
             ->setParameter('valid', true)
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
+
+        return $result;
     }
 
     /**
