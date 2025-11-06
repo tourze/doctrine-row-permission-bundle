@@ -17,11 +17,6 @@ use Tourze\PHPUnitSymfonyKernelTest\AbstractBundleTestCase;
 #[RunTestsInSeparateProcesses]
 final class DoctrineRowPermissionBundleTest extends AbstractBundleTestCase
 {
-    public function testBundleCanBeInstantiated(): void
-    {
-        $bundle = new DoctrineRowPermissionBundle();
-        $this->assertInstanceOf(DoctrineRowPermissionBundle::class, $bundle);
-    }
 }
 
 }

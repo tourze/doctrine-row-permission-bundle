@@ -128,31 +128,40 @@ class GrantRowPermissionRequest
         $request->setUser($user);
         $request->setObject($entity);
 
-        if (isset($permissions[PermissionConstantInterface::VIEW])) {
-            $value = $permissions[PermissionConstantInterface::VIEW];
-            $request->setView(is_bool($value) ? $value : null);
-        }
-
-        if (isset($permissions[PermissionConstantInterface::EDIT])) {
-            $value = $permissions[PermissionConstantInterface::EDIT];
-            $request->setEdit(is_bool($value) ? $value : null);
-        }
-
-        if (isset($permissions[PermissionConstantInterface::UNLINK])) {
-            $value = $permissions[PermissionConstantInterface::UNLINK];
-            $request->setUnlink(is_bool($value) ? $value : null);
-        }
-
-        if (isset($permissions[PermissionConstantInterface::DENY])) {
-            $value = $permissions[PermissionConstantInterface::DENY];
-            $request->setDeny(is_bool($value) ? $value : null);
-        }
-
-        if (isset($permissions['remark'])) {
-            $value = $permissions['remark'];
-            $request->setRemark(is_string($value) ? $value : null);
-        }
+        $request->applyBooleanPermission($permissions, PermissionConstantInterface::VIEW, $request->setView(...));
+        $request->applyBooleanPermission($permissions, PermissionConstantInterface::EDIT, $request->setEdit(...));
+        $request->applyBooleanPermission($permissions, PermissionConstantInterface::UNLINK, $request->setUnlink(...));
+        $request->applyBooleanPermission($permissions, PermissionConstantInterface::DENY, $request->setDeny(...));
+        $request->applyStringField($permissions, 'remark', $request->setRemark(...));
 
         return $request;
+    }
+
+    /**
+     * 应用布尔类型权限
+     *
+     * @param array<string, mixed> $permissions
+     * @param callable(?bool): void $setter
+     */
+    private function applyBooleanPermission(array $permissions, string $key, callable $setter): void
+    {
+        if (isset($permissions[$key])) {
+            $value = $permissions[$key];
+            $setter(is_bool($value) ? $value : null);
+        }
+    }
+
+    /**
+     * 应用字符串类型字段
+     *
+     * @param array<string, mixed> $permissions
+     * @param callable(?string): void $setter
+     */
+    private function applyStringField(array $permissions, string $key, callable $setter): void
+    {
+        if (isset($permissions[$key])) {
+            $value = $permissions[$key];
+            $setter(is_string($value) ? $value : null);
+        }
     }
 }

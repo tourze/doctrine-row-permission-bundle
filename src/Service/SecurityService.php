@@ -71,6 +71,7 @@ readonly class SecurityService implements RowPermissionInterface
             }
 
             // 确保 entityId 可以转换为字符串
+            assert(is_scalar($entityId) || (is_object($entityId) && method_exists($entityId, '__toString')), 'Entity ID must be convertible to string');
             $entityIdString = (string) $entityId;
 
             // 尝试从缓存获取
@@ -229,7 +230,7 @@ readonly class SecurityService implements RowPermissionInterface
      * @param UserInterface|null $user        用户对象
      * @param array<string>      $permissions 权限类型列表
      *
-     * @return array<string, mixed> 查询条件数组
+     * @return array<array{string, string, array<string, mixed>}> 查询条件数组
      */
     public function getQueryConditions(string $entityClass, string $alias, ?UserInterface $user, array $permissions = []): array
     {
@@ -244,6 +245,22 @@ readonly class SecurityService implements RowPermissionInterface
      * 为指定用户分配指定对象的权限
      */
     public function grantRowPermission(GrantRowPermissionRequest $request): UserRowPermission
+    {
+        [$user, $object, $entityIdString, $className] = $this->validateAndExtractRequestData($request);
+
+        $def = $this->findOrCreatePermission($user, $className, $entityIdString);
+        $this->applyPermissionsFromRequest($request, $def);
+        $this->persistPermission($def, $user, $object, $className, $entityIdString);
+
+        return $def;
+    }
+
+    /**
+     * 验证请求并提取数据
+     *
+     * @return array{UserInterface, object, string, string}
+     */
+    private function validateAndExtractRequestData(GrantRowPermissionRequest $request): array
     {
         $user = $request->getUser();
         if (null === $user) {
@@ -264,9 +281,18 @@ readonly class SecurityService implements RowPermissionInterface
             throw new InvalidEntityException('实体 ID 不能为空');
         }
 
+        assert(is_scalar($entityId) || (is_object($entityId) && method_exists($entityId, '__toString')), 'Entity ID must be convertible to string');
         $entityIdString = (string) $entityId;
-
         $className = $this->getRealClassName($object);
+
+        return [$user, $object, $entityIdString, $className];
+    }
+
+    /**
+     * 查找或创建权限记录
+     */
+    private function findOrCreatePermission(UserInterface $user, string $className, string $entityIdString): UserRowPermission
+    {
         $def = $this->rowPermissionRepository->findOneBy([
             'user' => $user,
             'entityClass' => $className,
@@ -280,7 +306,14 @@ readonly class SecurityService implements RowPermissionInterface
             $def->setEntityId($entityIdString);
         }
 
-        // 设置权限
+        return $def;
+    }
+
+    /**
+     * 从请求应用权限到实体
+     */
+    private function applyPermissionsFromRequest(GrantRowPermissionRequest $request, UserRowPermission $def): void
+    {
         if (null !== $request->getDeny()) {
             $def->setDeny($request->getDeny());
         }
@@ -298,25 +331,31 @@ readonly class SecurityService implements RowPermissionInterface
         }
 
         $def->setValid(true);
+    }
 
-        // 保存权限
+    /**
+     * 持久化权限记录
+     */
+    private function persistPermission(
+        UserRowPermission $def,
+        UserInterface $user,
+        object $object,
+        string $className,
+        string $entityIdString
+    ): void {
         try {
             $this->entityManager->persist($def);
             $this->entityManager->flush();
-
-            // 清除缓存
             $this->clearPermissionCache($user, $object);
         } catch (\Throwable $e) {
             $this->logger->error('保存权限记录失败', [
                 'error' => $e->getMessage(),
                 'entity_class' => $className,
-                'entity_id' => $entityId,
+                'entity_id' => $entityIdString,
                 'exception' => $e,
             ]);
             throw $e;
         }
-
-        return $def;
     }
 
     /**
@@ -337,6 +376,7 @@ readonly class SecurityService implements RowPermissionInterface
             ] as $permission) {
                 $entityId = method_exists($entity, 'getId') ? $entity->getId() : null;
                 if (null !== $entityId) {
+                    assert(is_scalar($entityId) || (is_object($entityId) && method_exists($entityId, '__toString')), 'Entity ID must be convertible to string');
                     $entityIdString = (string) $entityId;
                     $realEntityClass = $this->getRealClassName($entity);
                     $cacheKeys[] = sprintf(
