@@ -308,7 +308,7 @@ final class UserRowPermissionTest extends AbstractEntityTestCase
     {
         yield 'entityClass' => ['entityClass', 'TestEntityClass'];
         yield 'entityId' => ['entityId', '12345'];
-        yield 'user' => ['user', null];
+        // user 属性为 UserInterface 类型，避免序列化问题，由专门的测试方法覆盖
         yield 'remark' => ['remark', 'Test remark'];
         yield 'deny' => ['deny', true];
         yield 'view' => ['view', true];
