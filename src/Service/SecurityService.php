@@ -164,7 +164,6 @@ readonly class SecurityService implements RowPermissionInterface
     {
         $class = get_class($entity);
 
-        // @phpstan-ignore-next-line
         return ClassUtils::getRealClass($class);
     }
 
