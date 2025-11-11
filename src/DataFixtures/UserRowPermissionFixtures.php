@@ -31,7 +31,10 @@ class UserRowPermissionFixtures extends Fixture implements FixtureGroupInterface
         $testUsers = [];
         for ($i = 1; $i <= 10; ++$i) {
             $user = $this->userManager->createUser('test-user-' . $i);
-            $manager->persist($user);
+            // 注意：不要持久化用户，用户应该由UserManager自己管理
+            // 如果是TestEntityUserManager，它会自动处理持久化
+            // 如果是InMemoryUserManager，用户只在内存中
+            $this->userManager->saveUser($user);
             $testUsers[] = $user;
         }
 
