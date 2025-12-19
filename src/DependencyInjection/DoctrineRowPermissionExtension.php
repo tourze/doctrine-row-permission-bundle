@@ -6,7 +6,7 @@ namespace Tourze\DoctrineRowPermissionBundle\DependencyInjection;
 
 use Tourze\SymfonyDependencyServiceLoader\AutoExtension;
 
-class DoctrineRowPermissionExtension extends AutoExtension
+final class DoctrineRowPermissionExtension extends AutoExtension
 {
     protected function getConfigDir(): string
     {
